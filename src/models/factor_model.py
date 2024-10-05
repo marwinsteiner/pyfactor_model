@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from typing import List, Dict
 from sklearn.linear_model import LinearRegression
-from src.data.data_fetcher import DataFetcher
 from pathlib import Path
 import sys
 
