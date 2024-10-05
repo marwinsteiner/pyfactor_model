@@ -352,4 +352,3 @@ class FactorModel:
 
 ```
 
-First of all, we'll want to download a few external libraries by `poetry add numpy pandas sckikit-learn`.

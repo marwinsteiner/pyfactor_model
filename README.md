@@ -63,3 +63,12 @@ Where:
 
 By completing this project, we aim to demonstrate the practical application of factor models in portfolio construction
 and showcase the power of Python in quantitative finance.
+
+## Quickstart
+
+If you just want to see the library in action, clone the repo and run main.py. You can adjust the benchmark you wish to
+use, so long as the data is available on Polygon. You can also specify which stocks you want to have in your portfolio.
+You can also specify whether you'd like to use a persistent or on-demand data download. Persistent data download is
+recommended because you request the time series only once from the API and store the data locally. However, if you are
+constrained storage-wise and have no problem requesting data from the API again each time you run main, then you use
+on-demand mode.
