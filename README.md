@@ -41,10 +41,10 @@ Common factors in financial models often include:
 Using the factor model, we can construct portfolios by optimizing the exposure to desired factors while minimizing
 idiosyncratic risk. The portfolio optimization problem can be formulated as:
 
-$$\text{maximize } \quad \mu_p = w^T\mu$$
-$$\text{subject to } \quad \sigma_p^2 = w^T\Sigma w \leq \sigma_{target}^2$$
-$$\qquad\qquad\quad w^T\mathbf{1} = 1$$
-$$\qquad\qquad\quad w_i \geq 0 \quad \forall i$$
+$$\text{maximize } \quad \mu_p = w^T\mu
+\text{subject to } \quad \sigma_p^2 = w^T\Sigma w \leq \sigma_{target}^2
+\qquad\qquad\quad w^T\mathbf{1} = 1
+\qquad\qquad\quad w_i \geq 0 \quad \forall i$$
 
 Where:
 
