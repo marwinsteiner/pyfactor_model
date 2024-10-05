@@ -11,69 +11,72 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 
 class FactorModel:
-    def __init__(self, factors: List[str]):
+    def __init__(self, factors: List[str], benchmark_ticker: str = "SPY"):
         self.factors = factors
         self.factor_exposures = None
         self.factor_returns = None
+        self.benchmark_ticker = benchmark_ticker
 
-    def calculate_factor_exposures(self, input_data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+    def calculate_factor_exposures(self, data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+        # Exclude the benchmark from factor exposures calculation
+        stock_data = {ticker: df for ticker, df in data.items() if ticker != self.benchmark_ticker}
+
         # Convert data to DataFrame of closing prices
-        df_close = pd.DataFrame({ticker_data: input_data[ticker_data]['close'] for ticker_data in input_data})
+        df = pd.DataFrame({ticker: stock_data[ticker]['close'] for ticker in stock_data})
 
         # Calculate returns
-        returns_data = df_close.pct_change(fill_method=None).dropna()
+        returns = df.pct_change(fill_method=None).dropna()
 
         # Calculate market returns (assuming equal-weighted portfolio)
-        market_returns = returns_data.mean(axis=1)
+        market_returns = returns.mean(axis=1)
 
         # Calculate factor exposures
-        portfolio_exposures = pd.DataFrame(index=df_close.columns, columns=self.factors)
+        exposures = pd.DataFrame(index=df.columns, columns=self.factors)
 
-        for ticker_data in df_close.columns:
+        for ticker in df.columns:
             # Market factor (Beta)
-            portfolio_exposures.loc[ticker_data, 'Market'] = np.cov(returns_data[ticker_data], market_returns)[
-                                                                 0, 1] / np.var(
-                market_returns)
+            exposures.loc[ticker, 'Market'] = np.cov(returns[ticker], market_returns)[0, 1] / np.var(market_returns)
 
             # Size factor (market cap as proxy, using last close price as simple proxy)
-            portfolio_exposures.loc[ticker_data, 'Size'] = np.log(df_close[ticker_data].iloc[-1])
+            exposures.loc[ticker, 'Size'] = np.log(df[ticker].iloc[-1])
 
             # Value factor (assuming book value is available, using price-to-book ratio)
             # Note: In a real scenario, you would need to incorporate book value data
-            portfolio_exposures.loc[ticker_data, 'Value'] = 1 / df_close[ticker_data].iloc[
-                -1]  # Placeholder, inverse of price as proxy
+            exposures.loc[ticker, 'Value'] = 1 / df[ticker].iloc[-1]  # Placeholder, inverse of price as proxy
 
             # Momentum factor (use available data if less than 12 months)
-            if len(df_close) > 1:
-                portfolio_exposures.loc[ticker_data, 'Momentum'] = (df_close[ticker_data].iloc[-1] /
-                                                                    df_close[ticker_data].iloc[0]) - 1
+            if len(df) > 1:
+                exposures.loc[ticker, 'Momentum'] = (df[ticker].iloc[-1] / df[ticker].iloc[0]) - 1
             else:
-                portfolio_exposures.loc[ticker_data, 'Momentum'] = np.nan
+                exposures.loc[ticker, 'Momentum'] = np.nan
 
-        self.factor_exposures = portfolio_exposures
-        return portfolio_exposures
+        self.factor_exposures = exposures
+        return exposures
 
-    def estimate_factor_returns(self, input_data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+    def estimate_factor_returns(self, data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+        # Exclude the benchmark from factor returns estimation
+        stock_data = {ticker: df for ticker, df in data.items() if ticker != self.benchmark_ticker}
+
         # Convert data to DataFrame of closing prices
-        df_close = pd.DataFrame({ticker_data: input_data[ticker_data]['close'] for ticker_data in input_data})
+        df = pd.DataFrame({ticker: stock_data[ticker]['close'] for ticker in stock_data})
 
         # Calculate returns
-        returns_data = df_close.pct_change(fill_method=None).dropna()
+        returns = df.pct_change(fill_method=None).dropna()
 
         # Ensure factor exposures are calculated
         if self.factor_exposures is None:
-            self.calculate_factor_exposures(input_data)
+            self.calculate_factor_exposures(data)
 
         # Prepare for cross-sectional regression
-        factor_returns = pd.DataFrame(index=returns_data.index, columns=self.factors)
+        factor_returns = pd.DataFrame(index=returns.index, columns=self.factors)
 
         # Perform cross-sectional regression for each time period
-        for date in returns_data.index:
-            y_data = returns_data.loc[date]
-            x_data = self.factor_exposures.dropna()  # Remove any stocks with NaN exposures
+        for date in returns.index:
+            y = returns.loc[date]
+            X = self.factor_exposures.dropna()  # Remove any stocks with NaN exposures
 
-            if len(x_data) > 0 and not y_data.isnull().all():  # Only perform regression if we have valid data
-                model = LinearRegression().fit(x_data, y_data[x_data.index])
+            if len(X) > 0 and not y.isnull().all():  # Only perform regression if we have valid data
+                model = LinearRegression().fit(X, y[X.index])
                 factor_returns.loc[date] = model.coef_  # type: ignore
             else:
                 factor_returns.loc[date] = np.nan
@@ -83,24 +86,27 @@ class FactorModel:
         self.factor_returns = factor_returns
         return factor_returns
 
-    def construct_portfolio(self, input_data: Dict[str, pd.DataFrame],
+    def construct_portfolio(self, data: Dict[str, pd.DataFrame],
                             target_exposures: Dict[str, float]) -> pd.Series:
         # Ensure factor exposures and returns are calculated
         if self.factor_exposures is None:
-            self.calculate_factor_exposures(input_data)
+            self.calculate_factor_exposures(data)
         if self.factor_returns is None:
-            self.estimate_factor_returns(input_data)
+            self.estimate_factor_returns(data)
+
+        # Exclude the benchmark from portfolio construction
+        stock_tickers = [ticker for ticker in self.factor_exposures.index if ticker != self.benchmark_ticker]
 
         # Convert target exposures to Series
         target = pd.Series(target_exposures)
 
         # Simple portfolio construction: maximize expected return subject to target factor exposures
         # Note: This is a simplified approach. In practice, you might use optimization techniques.
-        portfolio = pd.Series(0, index=self.factor_exposures.index)
+        portfolio = pd.Series(0, index=stock_tickers)
         remaining_budget = 1.0
 
         for factor in self.factors:
-            factor_portfolio = self.factor_exposures[factor] * target[factor]
+            factor_portfolio = self.factor_exposures.loc[stock_tickers, factor] * target[factor]
             factor_sum = factor_portfolio.abs().sum()
 
             if factor_sum > 0:
@@ -112,13 +118,14 @@ class FactorModel:
                 print(f"Warning: Unable to allocate to {factor} factor due to zero sum of exposures.")
 
         # Normalize weights to sum to 1, ignoring NaN values
-        portfolio = portfolio.fillna(0)
+        portfolio = portfolio.fillna(0).infer_objects(copy=False)
         portfolio_sum = portfolio.abs().sum()
         if portfolio_sum > 0:
             portfolio = portfolio / portfolio_sum
         else:
             print("Warning: Unable to construct portfolio due to zero sum of weights.")
-            return pd.Series(0, index=self.factor_exposures.index)
+            return pd.Series(0, index=stock_tickers)
+
         return portfolio
 
 
@@ -126,18 +133,12 @@ if __name__ == "__main__":
     # Fetch historical data using DataFetcher
     data_fetcher = DataFetcher(mode="persistent")
     historical_data = data_fetcher.fetch_historical_data(
-        tickers=["AAPL", "GOOGL", "MSFT", "AMZN", "NVDA"],
+        tickers=["AAPL", "GOOGL", "MSFT", "AMZN", "NVDA", "SPY"],  # Include SPY for testing
         start_date="2022-01-01",
         end_date="2023-01-01"
     )
 
-    if not historical_data:
-        print("No data available. Exiting.")
-        exit(1)
-
-    print(f"\nProcessing data for {len(historical_data)} tickers.")
-
-    model = FactorModel(['Market', 'Size', 'Value', 'Momentum'])
+    model = FactorModel(['Market', 'Size', 'Value', 'Momentum'], benchmark_ticker="SPY")
 
     try:
         exposures = model.calculate_factor_exposures(historical_data)
