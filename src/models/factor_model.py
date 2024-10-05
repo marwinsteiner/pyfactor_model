@@ -118,6 +118,9 @@ class FactorModel:
                 print(f"Warning: Unable to allocate to {factor} factor due to zero sum of exposures.")
 
         # Normalize weights to sum to 1, ignoring NaN values
+        pd.set_option('future.no_silent_downcasting', True)
+        """At the time of writing, downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will 
+        change in a future version. Hence, we opt into the new behavior to deal with the FutureWarning."""
         portfolio = portfolio.fillna(0).infer_objects(copy=False)
         portfolio_sum = portfolio.abs().sum()
         if portfolio_sum > 0:
