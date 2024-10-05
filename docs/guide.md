@@ -144,62 +144,172 @@ root to something like this:
 
 ## **4. Let's get Coding**
 
-### `DataFetcher`
+### `*\pyfactor_model\src\data\data_fetcher.py`
 
-First, we'll need some data to work with our model, so let's start working
-on `*\pyfactor_model\src\data\data_fetcher.py`.
+The overarching goal of the project is to let us implement a multifactor model, which requires access to values for
+variables such as returns, which we can only calculate if we have a time series, in other words, market data. So, it's
+integral to our project, that we design a script which is responsible strictly for downloading/fetching market data.
+That's where `*\pyfactor_model\src\data\data_fetcher.py` comes in.
 
-The `data_fetcher.py` module is responsible for downloading data from Polygon. We make a few imports, `os`for potential
-file path operations, though it's not yet used. We also import `typing` fo type hinting, improving
-readability, `datetime` for timestamp conversions, and `polygon.RESTClient` is the main class we'll use to interact with
-the Polygon API. Finally, `Dynaconf` is used for managing our configuration, including API keys.
+The `DataFetcher` class is integral to the functioning of our factor model -- if we don't have time series to use, we
+can not test our model. The `DataFetcher` should let us fetch historical stock time series from our data provider,
+Polygon. We design our implementation such that we have two usage modes: a 'persistent' and an 'on-demand' mode,
+meaning, that wherever the class is instantiated, the use-case can dictate whether it makes more sense to download the
+time series once, store them locally and access them locally to fit our model, or there might be a use-case where you
+need this project to be extremely portable and you don't care how many API credits it will cost you, meaning you can
+fetch data from the API on-demand each time you run it. Further, the 'persistent' variant is designed so as to fetch
+data from the API when it can't find it locally. So, if you've tested the script with tickers A, B, and C, but you want
+to know how it would fare with A, B, C, and D, then the persistent mode will notice A, B, and C exist and only fetch D.
+The 'on-demand' mode would fetch all tickers on each new execution.
 
-We then set up our Dynaconf config, loading our settings from two files, `settings.json` and `.secrets.json`. This
-practice is good for security and config management.
+A final design considerationis that we need to provide a consistent interface for data retrieval. This means it needs to
+be extremely easy to retrieve data from another script in our project. What good is a script if it isn't usable?
 
-Then we initialize the `DataFetcher` class with a Polygon `RESTClient`. We use the API key from `.secrets.json`, which
-keeps the key secure and separate from our code. The main method of our `DataFetcher` class is `fetch_historical_data`.
-A key consideration when writing this method, is that we need it to be flexible. It accepts multiple tickers, allowing
-us to fetch data for several stocks at once. We can specify the date range, timespan (daily, hourly, minute-date), and
-whether we want adjusted data or not. The `limit` parameter lets us specify the maximum number of data points returned.
+To reiterate, this class serves as the data foundation for our factor model, ensuring that we have reliable and
+efficient access to the historical stock data needed for our analysis.
 
-Inside the method, we iterate over each ticker we're retrieving data for. While slightly slow, this allows us more
-flexibiltiy, because we can fetch data for each ticker independently, handle errors for individual tickers without
-stopping the entire process, and customize the data retrieval parameters for each call. We then process the data into a
-more usable format:
+As mentioned before, it supports dual-mode operation, giving use-case flexibility. We use the Polygon RESTClient, which
+negates any requirement to use requests, essentially simplifying our interactions with their API. In 'persistent' mode,
+we save the time series as CSV files for later use, reducing API calls and speeding up any subsequent analysis. We also
+use Dynaconf for managing API keys, which is good practice.
+
+Let's get started!
 
 ```python
-historical_data[ticker] = [
-    {
-        "timestamp": self._convert_timestamp_to_date(bar.timestamp),
-        "open": bar.open,
-        "high": bar.high,
-        "low": bar.low,
-        "close": bar.close,
-        "volume": bar.volume,
-        "vwap": bar.vwap,
-        "transactions": bar.transactions
-    }
-    for bar in aggs
-]
+from polygon import RESTClient
+from dynaconf import Dynaconf
+from typing import List, Dict
+from datetime import datetime
+import pandas as pd
+from src.utils.path_utils import get_project_root
+
+settings = Dynaconf(settings_files=['settings.json', '.secrets.json'])
 ```
 
-This list comprehension converts the Polygon data into a list of dictionaries, making it easier to work with in Python.
-It also simplifies later conversion to a `pandas` DataFrame.
+We import the polgygon `RESTClient` for interactions with the Polygon API, import Dynaconf for handing our API key (
+which you should now have set up), we grab `List and Dict` from `typing`, which are for type hinting. Again, this is
+good practice and is meant to make the code more maintainable and easier to understand. We also import `datetime` to
+deal with times, `pandas` for working with dataframes and a helper module to get the project root. We then let Dynaconf
+know which files contain our config.
 
-We also write a helper method `_convert_timestamp_to_date`, which converts the Unix timestamp (in milliseconds) to a
-readable date string. It's a private method as it's an internal utility.
+```python
+class DataFetcher:
+    def __init__(self, mode: str = "on_demand"):
+        self.client = RESTClient(api_key=settings.POLYGON_API_KEY)
+        self.mode = mode
+        self.data_dir = get_project_root() / "src" / "data" / "data_download"
+        if self.mode == "persistent":
+            self.data_dir.mkdir(exist_ok=True)
+```
 
-To recap: we wrote out the `DataFetcher` class, with which we can now retrieve market data for any valid ticker,
-timeframe, and interval from the Polygon API.
+Next, we define the DataFetcher class along with its class constructor, which initializes the Polygon API client, sets
+the operation mode, and prepares the data directory for persistent storage if required.
 
-We've kept a few key principles in mind:
+```python
+def fetch_historical_data(
+        self,
+        tickers: List[str],
+        start_date: str,
+        end_date: str,
+        timespan: str = "day",
+        limit: int = 50000,
+        adjusted: bool = True
+) -> Dict[str, pd.DataFrame]:
+    historical_data = {}
 
-1. Flexibility: we can fetch data for multiple tickers with various parameters.
-2. Error handling: errors can and do happen, but we avoid interrupting the entire data download as a result of this.
-3. Data formatting: we format the data as a list of dictionaries, designed to ease later use with `pandas`.
-4. Separation of concerns: API keys and other settings are managed separately from the code.
-5. Ease of use: the class can be easily imported and used in other parts of the project.
+    if self.mode == "persistent":
+        # Read all CSV files in the data directory
+        for csv_file in self.data_dir.glob("*.csv"):
+            ticker = csv_file.stem  # Get filename without extension
+            df = pd.read_csv(csv_file, parse_dates=['timestamp'])
+            df.set_index('timestamp', inplace=True)
+            historical_data[ticker] = df
+            print(f"Loaded data for {ticker} from file")
+
+        # Fetch data for tickers not present in the directory
+        missing_tickers = set(tickers) - set(historical_data.keys())
+        self._fetch_and_save_tickers(missing_tickers, start_date, end_date, timespan, limit, adjusted,
+                                     historical_data)
+    else:
+        # On-demand mode: fetch data for all requested tickers
+        self._fetch_and_save_tickers(tickers, start_date, end_date, timespan, limit, adjusted, historical_data)
+    return historical_data
+```
+
+Next, we define our main method, `fetch_historical_data`, which serves as our primary interface for retrieving
+historical
+data. It handles both persistent and on-demand modes. In persistent mode, it first checks for existing CSV files and
+loads data for them. For missing data (in persistent mode) or all data (in on-demand mode), it fetches from the Polygon
+API. The method returns a dictionary where keys are strings of the ticker symbols and values are pandas DataFrames
+containing the historical data.
+
+```python
+    def _fetch_and_save_tickers(self, tickers, start_date, end_date, timespan, limit, adjusted, historical_data):
+
+
+for ticker in tickers:
+    try:
+        aggs = self.client.get_aggs(
+            ticker=ticker,
+            multiplier=1,
+            timespan=timespan,
+            from_=start_date,
+            to=end_date,
+            limit=limit,
+            adjusted=adjusted
+        )
+
+        if not aggs:
+            print(f"No data fetched for {ticker}")
+            continue
+
+        df = pd.DataFrame([
+            {
+                "timestamp": self._convert_timestamp_to_date(bar.timestamp),
+                "open": bar.open,
+                "high": bar.high,
+                "low": bar.low,
+                "close": bar.close,
+                "volume": bar.volume,
+                "vwap": bar.vwap,
+                "transactions": bar.transactions
+            }
+            for bar in aggs
+        ])
+        df.set_index('timestamp', inplace=True)
+
+        if self.mode == "persistent":
+            df.to_csv(self.data_dir / f"{ticker}.csv")
+
+        historical_data[ticker] = df
+        print(f"Successfully fetched data for {ticker}")
+    except Exception as e:
+        print(f"Error fetching data for {ticker}: {str(e)}")
+```
+
+Here we handle the actual API call through the rest client and get aggs. What we get back from the API we turn into a
+dataframe with the following columns: `timestamp, open, high, low, close, volume, vwap, and transactions` for every bar
+in the aggregates in the period. If in persistent mode, for every dictionary in our list of dictionaries, we use the key
+as the filename and the value (dataframe) as the content of the csv file.
+
+We also need to convert the timestamps we get from Polygon from a Unix timestamp to a more useful format like "
+YYYY-MM-DD". We do this in the `_convert_timestamp_to_date` (private) helper method:
+
+```python
+def _convert_timestamp_to_date(self, timestamp: int) -> str:
+    return datetime.fromtimestamp(timestamp / 1000).strftime('%Y-%m-%d')
+```
+
+The `DataFetcher` class is designed to be the single point of interaction for data retrieval in the project. We'll use
+it in the factor model and the backtesting module, to obtain the necessary historical data. Whenever you can opt to
+simplify data management, you generally should.
+
+The rationale behind the dual-mode operation is I want to leave it open for the use-case to determine whether on-demand
+data or persistently stored data is required. This is not for me to decide. I chose the pandas DataFrame data structure
+because its powerful and fast enough for this use-case. It's also a flexible data structure for time series analysis,
+which is crucial for financial modeling. I chose to use Polygon as the data provider because there isn't really anywhere
+else to get so much daily closing data for free. They have paid API plans and the way our project is set up means its
+trivial to switch out the API key stored in the `.secrets.json` file and make use of the premium features. 
 
 ### `*\pyfactor_model\models\factor_model.py`
 
