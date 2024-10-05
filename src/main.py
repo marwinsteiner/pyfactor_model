@@ -1,11 +1,3 @@
-import pandas as pd
-from pathlib import Path
-import sys
-
-# Add the project root to the Python path
-project_root = str(Path(__file__).resolve().parent.parent)
-sys.path.insert(0, project_root)
-
 from src.data.data_fetcher import DataFetcher
 from src.models.factor_model import FactorModel
 from src.utils.data_preparation import prepare_returns_data, fetch_benchmark_returns
@@ -13,6 +5,13 @@ from src.utils.portfolio_construction import construct_equal_weight_portfolio, c
 from src.utils.backtesting import backtest_strategy
 from src.utils.performance_evaluation import PortfolioPerformance, calculate_turnover, perform_factor_attribution
 from src.utils.visualization import plot_cumulative_returns, plot_drawdown, plot_factor_attribution
+
+from pathlib import Path
+import sys
+
+# Add the project root to the Python path
+project_root = str(Path(__file__).resolve().parent.parent)
+sys.path.insert(0, project_root)
 
 
 def main():
