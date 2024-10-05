@@ -15,7 +15,6 @@ class DataFetcher:
         self.data_dir = get_project_root() / "src" / "data" / "data_download"
         if self.mode == "persistent":
             self.data_dir.mkdir(exist_ok=True)
-        print(f"Data directory: {self.data_dir}")  # Add this line for debugging
 
     def fetch_historical_data(
             self,
