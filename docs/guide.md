@@ -1,5 +1,10 @@
 # Project Guide and Instructions
 
+The aim of this guide and the instructions herein are for you to replicate this project in an environment of your own.
+If you just want to see it working and you've cloned this repo, simply follow the "Quick Start" instructions contained
+in the Readme. More generally, the Readme also contains some information on what multifactor models are and why we might
+care. So let's get cracking!
+
 ## **1. Project Setup **
 
 First we will need to create a base virtual environment, which is easy to do with
@@ -27,191 +32,105 @@ PyCharm.
 ## **2. Project Structure Setup**
 
 Now that you've set up the project, we have to set up our folder structure, which should be as follows:
+
 ```
 C:.
-│ .gitignore
-│ .secrets.json
-│ config.py
-│ poetry.lock
-│ pyproject.toml
-│ README.md
-│ settings.json
+│   .gitignore
+│   .secrets.json
+│   config.py
+│   poetry.lock
+│   pyproject.toml
+│   README.md
+│   settings.json
 │
 ├───.idea
-│ │ .gitignore
-│ │ misc.xml
-│ │ modules.xml
-│ │ pyfactor_model.iml
-│ │ vcs.xml
-│ │ workspace.xml
-│ │
-│ └───inspectionProfiles
-│ profiles_settings.xml
+│   │   .gitignore
+│   │   misc.xml
+│   │   modules.xml
+│   │   other.xml
+│   │   pyfactor_model.iml
+│   │   vcs.xml
+│   │   workspace.xml
+│   │
+│   └───inspectionProfiles
+│           profiles_settings.xml
 │
 ├───docs
-│ guide.md
-│ setup.md
+│   │   guide.md
+│   │   setup.md
+│   │
+│   └───img
+│           cumulative_returns.png
+│           drawdown.png
+│           factor_attributes.png
 │
 ├───src
-│ │ main.py
-│ │   __init__.py
-│ │
-│ ├───data
-│ │ data_fetcher.py
-│ │       __init__.py
-│ │
-│ ├───models
-│ │ factor_model.py
-│ │       __init__.py
-│ │
-│ └───utils
-│ helpers.py
-│           __init__.py
+│   │   main.py
+│   │   __init__.py
+│   │
+│   ├───data
+│   │   │   data_fetcher.py
+│   │   │   __init__.py
+│   │   │
+│   │   ├───data_download
+│   │   │       AAPL.csv
+│   │   │       AMZN.csv
+│   │   │       GOOGL.csv
+│   │   │       MSFT.csv
+│   │   │       NVDA.csv
+│   │   │       SPY.csv
+│   │   │
+│   │   └───__pycache__
+│   │           data_fetcher.cpython-312.pyc
+│   │           __init__.cpython-312.pyc
+│   │
+│   ├───models
+│   │   │   factor_model.py
+│   │   │   __init__.py
+│   │   │
+│   │   └───__pycache__
+│   │           factor_model.cpython-312.pyc
+│   │           __init__.cpython-312.pyc
+│   │
+│   ├───utils
+│   │   │   backtesting.py
+│   │   │   data_preparation.py
+│   │   │   path_utils.py
+│   │   │   performance_evaluation.py
+│   │   │   portfolio_construction.py
+│   │   │   visualization.py
+│   │   │   __init__.py
+│   │   │
+│   │   └───__pycache__
+│   │           backtesting.cpython-312.pyc
+│   │           data_preparation.cpython-312.pyc
+│   │           path_utils.cpython-312.pyc
+│   │           performance_evaluation.cpython-312.pyc
+│   │           portfolio_construction.cpython-312.pyc
+│   │           visualization.cpython-312.pyc
+│   │           __init__.cpython-312.pyc
+│   │
+│   └───__pycache__
+│           __init__.cpython-312.pyc
 │
 ├───tests
-│ test_data_fetcher.py
-│ test_factor_model.py
-│       __init__.py
+│   │   test_data_fetcher.py
+│   │   test_factor_model.py
+│   │   __init__.py
+│   │
+│   └───__pycache__
+│           test_data_fetcher.cpython-312.pyc
+│           test_factor_model.cpython-312.pyc
+│           __init__.cpython-312.pyc
 │
 └───__pycache__
-config.cpython-312.pyc
+        config.cpython-312.pyc
 ```
+
 Don't worry about the `.idea` or `__pycache__` folders, these are automatically generated. You must create the source
 and tests folders and the files contained within.
 
-## **3. Basic File Setup**
-
-We're now ready to start coding! We'll set up some boilerplate code for several of our files to get going.
-
-1. `src/data/data_fetcher.py`
-
-```python
-import os
-from polygon import RESTClient
-from dynaconf import Dynaconf
-
-settings = Dynaconf(settings_files=["settings.toml", ".secrets.toml"])
-
-
-class DataFetcher:
-    def __init__(self):
-        self.client = RESTClient(api_key=settings.POLYGON_API_KEY)
-
-    def fetch_historical_data(self, ticker, start_date, end_date):
-        # Implement data fetching logic here
-        pass
-```
-
-2. `src/models/factor_model.py`
-
-```python
-import numpy as np
-import pandas as pd
-
-
-class FactorModel:
-    def __init__(self, factors):
-        self.factors = factors
-
-    def calculate_factor_exposures(self, data):
-        # Implement factor exposure calculation
-        pass
-
-    def estimate_factor_returns(self, data):
-        # Implement factor returns estimation
-        pass
-
-    def construct_portfolio(self, data):
-        # Implement portfolio construction logic
-        pass
-```
-
-3. `src/main.py`
-
-```python
-import pandas as pd
-import numpy as np
-from src.data.data_fetcher import DataFetcher
-from src.models.factor_model import FactorModel
-from src.utils.performance_evaluation import (
-    calculate_total_return,
-    calculate_annualized_return,
-    calculate_sharpe_ratio,
-    calculate_max_drawdown,
-    calculate_alpha_beta,
-    calculate_information_ratio,
-    perform_factor_attribution,
-    calculate_turnover
-)
-from src.utils.visualization import plot_performance_comparison
-
-
-def main():
-    # Fetch historical data
-    data_fetcher = DataFetcher(mode="persistent")
-    historical_data = data_fetcher.fetch_historical_data(
-        tickers=["AAPL", "GOOGL", "MSFT", "AMZN", "NVDA"],
-        start_date="2020-01-01",
-        end_date="2023-01-01"
-    )
-
-    # Initialize factor model
-    model = FactorModel(['Market', 'Size', 'Value', 'Momentum'])
-
-    # Backtesting parameters
-    rebalance_frequency = 'M'  # Monthly rebalancing
-    window_size = 252  # One year of trading days
-
-    # Perform backtesting
-    portfolio_returns = backtest_strategy(historical_data, model, rebalance_frequency, window_size)
-
-    # Calculate performance metrics
-    total_return = calculate_total_return(portfolio_returns)
-    annualized_return = calculate_annualized_return(portfolio_returns)
-    sharpe_ratio = calculate_sharpe_ratio(portfolio_returns)
-    max_drawdown = calculate_max_drawdown(portfolio_returns)
-    alpha, beta = calculate_alpha_beta(portfolio_returns, benchmark_returns)
-    information_ratio = calculate_information_ratio(portfolio_returns, benchmark_returns)
-
-    # Perform factor attribution
-    factor_attribution = perform_factor_attribution(model, portfolio_returns)
-
-    # Calculate turnover
-    turnover = calculate_turnover(portfolio_weights_over_time)
-
-    # Compare with benchmarks
-    equal_weight_returns = calculate_equal_weight_returns(historical_data)
-    market_cap_weight_returns = calculate_market_cap_weight_returns(historical_data)
-    # Fetch benchmark (e.g., S&P 500) returns
-    benchmark_returns = fetch_benchmark_returns(start_date, end_date)
-
-    # Visualize results
-    plot_performance_comparison(
-        portfolio_returns,
-        equal_weight_returns,
-        market_cap_weight_returns,
-        benchmark_returns
-    )
-
-    # Print performance summary
-    print_performance_summary(
-        total_return,
-        annualized_return,
-        sharpe_ratio,
-        max_drawdown,
-        alpha,
-        beta,
-        information_ratio,
-        factor_attribution,
-        turnover
-    )
-
-
-if __name__ == "__main__":
-    main()
-```
-
-## **4. API Setup**
+## **3. API Setup**
 
 You'll want to have an existing or create a new account with Polygon, which will serve as our market data provider.
 Store your API key, as we'll need this for our project. You'll want to modify your `.secrets.json` file at the project
@@ -223,7 +142,7 @@ root to something like this:
 }
 ```
 
-## **5. Let's get Coding**
+## **4. Let's get Coding**
 
 ### `DataFetcher`
 

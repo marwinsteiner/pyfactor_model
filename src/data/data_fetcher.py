@@ -111,21 +111,3 @@ class DataFetcher:
             str: Date string in 'YYYY-MM-DD' format.
         """
         return datetime.fromtimestamp(timestamp / 1000).strftime('%Y-%m-%d')
-
-
-# TODO Example usage -- modify to reflect data structure change
-
-if __name__ == "__main__":
-    fetcher = DataFetcher()
-    data = fetcher.fetch_historical_data(
-        tickers=["AAPL", "GOOGL", "MSFT"],
-        start_date="2022-01-01",
-        end_date="2023-01-01"
-    )
-
-    for ticker, ticker_data in data.items():
-        print(f"{ticker}: {len(ticker_data)} data points")
-        if ticker_data:
-            print(f"First data point: {ticker_data[0]}")
-            print(f"Last data point: {ticker_data[-1]}")
-        print("---")
