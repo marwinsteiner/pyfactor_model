@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "pyfactor-model"
+version = "0.1.0"
+description = "A factor model in Python"
+authors = ["Marwin Steiner <marwin.steiner@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+dynaconf = "^3.2.6"
+polygon-api-client = "^1.14.2"
+scikit-learn = "^1.5.2"
+matplotlib = "^3.9.2"
+seaborn = "^0.13.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
