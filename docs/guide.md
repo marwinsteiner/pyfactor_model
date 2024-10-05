@@ -27,7 +27,7 @@ PyCharm.
 ## **2. Project Structure Setup**
 
 Now that you've set up the project, we have to set up our folder structure, which should be as follows:
-``
+```
 C:.
 │ .gitignore
 │ .secrets.json
@@ -75,9 +75,9 @@ C:.
 │
 └───__pycache__
 config.cpython-312.pyc
-``
+```
 Don't worry about the `.idea` or `__pycache__` folders, these are automatically generated. You must create the source
-and tests folders.
+and tests folders and the files contained within.
 
 ## **3. Basic File Setup**
 
@@ -129,40 +129,82 @@ class FactorModel:
 3. `src/main.py`
 
 ```python
-from data.data_fetcher import DataFetcher
-from models.factor_model import FactorModel
+import pandas as pd
+import numpy as np
+from src.data.data_fetcher import DataFetcher
+from src.models.factor_model import FactorModel
+from src.utils.performance_evaluation import (
+    calculate_total_return,
+    calculate_annualized_return,
+    calculate_sharpe_ratio,
+    calculate_max_drawdown,
+    calculate_alpha_beta,
+    calculate_information_ratio,
+    perform_factor_attribution,
+    calculate_turnover
+)
+from src.utils.visualization import plot_performance_comparison
 
 
 def main():
-    # Initialize data fetcher
-    data_fetcher = DataFetcher()
-
     # Fetch historical data
+    data_fetcher = DataFetcher(mode="persistent")
     historical_data = data_fetcher.fetch_historical_data(
-        ticker="AAPL",
-        start_date="2022-01-01",
+        tickers=["AAPL", "GOOGL", "MSFT", "AMZN", "NVDA"],
+        start_date="2020-01-01",
         end_date="2023-01-01"
     )
 
-    # Define factors
-    factors = ["market", "size", "value", "momentum"]
-
     # Initialize factor model
-    model = FactorModel(factors)
+    model = FactorModel(['Market', 'Size', 'Value', 'Momentum'])
 
-    # Calculate factor exposures
-    exposures = model.calculate_factor_exposures(historical_data)
+    # Backtesting parameters
+    rebalance_frequency = 'M'  # Monthly rebalancing
+    window_size = 252  # One year of trading days
 
-    # Estimate factor returns
-    factor_returns = model.estimate_factor_returns(historical_data)
+    # Perform backtesting
+    portfolio_returns = backtest_strategy(historical_data, model, rebalance_frequency, window_size)
 
-    # Construct portfolio
-    portfolio = model.construct_portfolio(historical_data)
+    # Calculate performance metrics
+    total_return = calculate_total_return(portfolio_returns)
+    annualized_return = calculate_annualized_return(portfolio_returns)
+    sharpe_ratio = calculate_sharpe_ratio(portfolio_returns)
+    max_drawdown = calculate_max_drawdown(portfolio_returns)
+    alpha, beta = calculate_alpha_beta(portfolio_returns, benchmark_returns)
+    information_ratio = calculate_information_ratio(portfolio_returns, benchmark_returns)
 
-    # Output results
-    print("Factor Exposures:", exposures)
-    print("Factor Returns:", factor_returns)
-    print("Constructed Portfolio:", portfolio)
+    # Perform factor attribution
+    factor_attribution = perform_factor_attribution(model, portfolio_returns)
+
+    # Calculate turnover
+    turnover = calculate_turnover(portfolio_weights_over_time)
+
+    # Compare with benchmarks
+    equal_weight_returns = calculate_equal_weight_returns(historical_data)
+    market_cap_weight_returns = calculate_market_cap_weight_returns(historical_data)
+    # Fetch benchmark (e.g., S&P 500) returns
+    benchmark_returns = fetch_benchmark_returns(start_date, end_date)
+
+    # Visualize results
+    plot_performance_comparison(
+        portfolio_returns,
+        equal_weight_returns,
+        market_cap_weight_returns,
+        benchmark_returns
+    )
+
+    # Print performance summary
+    print_performance_summary(
+        total_return,
+        annualized_return,
+        sharpe_ratio,
+        max_drawdown,
+        alpha,
+        beta,
+        information_ratio,
+        factor_attribution,
+        turnover
+    )
 
 
 if __name__ == "__main__":
