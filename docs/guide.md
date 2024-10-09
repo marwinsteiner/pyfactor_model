@@ -309,7 +309,7 @@ data or persistently stored data is required. This is not for me to decide. I ch
 because its powerful and fast enough for this use-case. It's also a flexible data structure for time series analysis,
 which is crucial for financial modeling. I chose to use Polygon as the data provider because there isn't really anywhere
 else to get so much daily closing data for free. They have paid API plans and the way our project is set up means its
-trivial to switch out the API key stored in the `.secrets.json` file and make use of the premium features. 
+trivial to switch out the API key stored in the `.secrets.json` file and make use of the premium features.
 
 ### `*\pyfactor_model\models\factor_model.py`
 
@@ -322,62 +322,39 @@ implementing the factor model:
 3. Estimate factor returns.
 4. Construct a portfolio based on the factor model.
 
-Here's a wireframe of `*\pyfactor_model\models\factor_model.py`:
+We start off with a handful of imports:
 
 ```python
 import numpy as np
 import pandas as pd
-from typing import List, Dict, Any
+from typing import List, Dict
 from sklearn.linear_model import LinearRegression
-from src.data.data_fetcher import DataFetcher
-
-
-class FactorModel:
-    def __init__(self):
-        """
-      Initialize the FactorModel with a list of factors.
-
-      Args:
-          factors (List[str]): List of factor names.
-      """
-        pass
-
-    def calculate_factor_exposure(self):
-        """
-      Calculate factor exposures for each stock.
-
-      Args:
-          data (Dict[str, List[Dict[str, Any]]]): Historical data for multiple stocks.
-
-      Returns:
-          pd.DataFrame: Factor exposures for each stock.
-      """
-        pass
-
-    def estimate_factor_returns(self):
-        """
-      Estimate factor returns using cross-sectional regression.
-
-      Args:
-          data (Dict[str, List[Dict[str, Any]]]): Historical data for multiple stocks.
-
-      Returns:
-          pd.DataFrame: Estimated factor returns over time.
-      """
-        pass
-
-    def construct_portfolio(self):
-        """
-      Construct a portfolio based on target factor exposures.
-
-      Args:
-          data (Dict[str, List[Dict[str, Any]]]): Historical data for multiple stocks.
-          target_exposures (Dict[str, float]): Target exposures for each factor.
-
-      Returns:
-          pd.Series: Portfolio weights for each stock.
-      """
-        pass
-
+from pathlib import Path
+import sys
 ```
 
+`numpy` for math operations in python, `pandas` to use our data structure of choice, DataFrames, `typing` for type
+hinting,
+`pathlib` (because `os` sucks), and `sys` to deal with paths.
+
+Next, we need to add the project root to the Python path, to avoid any issues later on, with our script not finding
+persistently stored CSV files, because it doesn't know what folder to look in. I experienced this issue later on and
+this fix worked, but perhaps there is a sleeker way to do it:
+
+```python
+sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
+```
+
+Next, we define our `FactorModel` class, the star of the show, along with its class constructor where we define a few
+things like factors to use, factor exposures, factor returns, and what benchmark we're using. To take abstraction a step
+further, this could be interactively defined for the use-case and makes my implementation a bit inflexible with regards
+to which benchmark can be used, since you have to specify it here as opposed to where you use the class (and its
+methods).
+```python
+class FactorModel:
+    def __init__(self, factors: List[str], benchmark_ticker: str = "SPY"):
+        self.factors = factors
+        self.factor_exposures = None
+        self.factor_returns = None
+        self.benchmark_ticker = benchmark_ticker
+```

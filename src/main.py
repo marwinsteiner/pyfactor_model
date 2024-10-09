@@ -16,15 +16,15 @@ sys.path.insert(0, project_root)
 
 def main():
     # 1. Data Preparation
-    data_fetcher = DataFetcher(mode="persistent")
+    data_fetcher = DataFetcher(mode='persistent')
 
     # Define date range
-    start_date = "2018-01-01"
-    end_date = "2023-01-01"
+    start_date = '2018-01-01'
+    end_date = '2023-01-01'
 
     # Define stock tickers and benchmark ticker
-    stock_tickers = ["AAPL", "GOOGL", "MSFT", "AMZN", "NVDA"]
-    benchmark_ticker = "SPY"
+    stock_tickers = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'NVDA']
+    benchmark_ticker = 'SPY'
 
     # Fetch data for stocks
     historical_data = data_fetcher.fetch_historical_data(
@@ -34,10 +34,10 @@ def main():
     )
 
     if not historical_data:
-        print("No data available for stocks. Exiting.")
+        print('No data available for stocks. Exiting...')
         exit(1)
 
-    print(f"Processing data for {len(historical_data)} stocks.")
+    print(f'Processing data for {len(historical_data)} stocks.')
 
     # Prepare returns data for stocks
     returns_data = prepare_returns_data(historical_data)
@@ -77,25 +77,25 @@ def main():
     attribution = perform_factor_attribution(factor_returns, factor_exposures, portfolio_returns)
 
     # 6. Results Presentation
-    print("\nFactor Model Portfolio Performance:")
+    print('\nFactor Model Portfolio Performance:')
     print(factor_portfolio_performance.summary())
-    print(f"\nPortfolio Turnover: {turnover:.2%}")
+    print(f'\nPortfolio Turnover: {turnover:.2%}')
 
-    print("\nEqual-Weight Portfolio Performance:")
+    print('\nEqual-Weight Portfolio Performance:')
     print(equal_weight_performance.summary())
 
-    print("\nMarket-Cap-Weight Portfolio Performance:")
+    print('\nMarket-Cap-Weight Portfolio Performance:')
     print(market_cap_performance.summary())
 
-    print("\nFactor Attribution:")
+    print('\nFactor Attribution:')
     print(attribution)
 
     # 7. Visualization
     plot_cumulative_returns({
-        "Factor Model": portfolio_returns,
-        "Equal-Weight": equal_weight_returns,
-        "Market-Cap-Weight": market_cap_weight_returns,
-        "Benchmark": aligned_benchmark_returns
+        'Factor Model': portfolio_returns,
+        'Equal-Weight': equal_weight_returns,
+        'Market-Cap-Weight': market_cap_weight_returns,
+        'Benchmark': aligned_benchmark_returns
     })
 
     plot_drawdown(portfolio_returns)

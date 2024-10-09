@@ -9,11 +9,11 @@ settings = Dynaconf(settings_files=['settings.json', '.secrets.json'])
 
 
 class DataFetcher:
-    def __init__(self, mode: str = "on_demand"):
+    def __init__(self, mode: str = 'on_demand'):
         self.client = RESTClient(api_key=settings.POLYGON_API_KEY)
         self.mode = mode
-        self.data_dir = get_project_root() / "src" / "data" / "data_download"
-        if self.mode == "persistent":
+        self.data_dir = get_project_root() / 'src' / 'data' / 'data_download'
+        if self.mode == 'persistent':
             self.data_dir.mkdir(exist_ok=True)
 
     def fetch_historical_data(
@@ -21,7 +21,7 @@ class DataFetcher:
             tickers: List[str],
             start_date: str,
             end_date: str,
-            timespan: str = "day",
+            timespan: str = 'day',
             limit: int = 50000,
             adjusted: bool = True
     ) -> Dict[str, pd.DataFrame]:
@@ -41,14 +41,14 @@ class DataFetcher:
         """
         historical_data = {}
 
-        if self.mode == "persistent":
+        if self.mode == 'persistent':
             # Read all CSV files in the data directory
-            for csv_file in self.data_dir.glob("*.csv"):
+            for csv_file in self.data_dir.glob('*.csv'):
                 ticker = csv_file.stem  # Get filename without extension
                 df = pd.read_csv(csv_file, parse_dates=['timestamp'])
                 df.set_index('timestamp', inplace=True)
                 historical_data[ticker] = df
-                print(f"Loaded data for {ticker} from file")
+                print(f'Loaded data for {ticker} from file')
 
             # Fetch data for tickers not present in the directory
             missing_tickers = set(tickers) - set(historical_data.keys())
@@ -73,31 +73,31 @@ class DataFetcher:
                 )
 
                 if not aggs:
-                    print(f"No data fetched for {ticker}")
+                    print(f'No data fetched for {ticker}')
                     continue
 
                 df = pd.DataFrame([
                     {
-                        "timestamp": self._convert_timestamp_to_date(bar.timestamp),
-                        "open": bar.open,
-                        "high": bar.high,
-                        "low": bar.low,
-                        "close": bar.close,
-                        "volume": bar.volume,
-                        "vwap": bar.vwap,
-                        "transactions": bar.transactions
+                        'timestamp': self._convert_timestamp_to_date(bar.timestamp),
+                        'open': bar.open,
+                        'high': bar.high,
+                        'low': bar.low,
+                        'close': bar.close,
+                        'volume': bar.volume,
+                        'vwap': bar.vwap,
+                        'transactions': bar.transactions
                     }
                     for bar in aggs
                 ])
                 df.set_index('timestamp', inplace=True)
 
-                if self.mode == "persistent":
-                    df.to_csv(self.data_dir / f"{ticker}.csv")
+                if self.mode == 'persistent':
+                    df.to_csv(self.data_dir / f'{ticker}.csv')
 
                 historical_data[ticker] = df
-                print(f"Successfully fetched data for {ticker}")
+                print(f'Successfully fetched data for {ticker}')
             except Exception as e:
-                print(f"Error fetching data for {ticker}: {str(e)}")
+                print(f'Error fetching data for {ticker}: {str(e)}')
 
     def _convert_timestamp_to_date(self, timestamp: int) -> str:
         """

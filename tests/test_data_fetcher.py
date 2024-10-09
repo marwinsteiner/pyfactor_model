@@ -28,20 +28,20 @@ class TestDataFetcher(unittest.TestCase):
         ]
         mock_rest_client.return_value.get_aggs.return_value = mock_aggs
 
-        fetcher = DataFetcher(mode="on_demand")
+        fetcher = DataFetcher(mode='on_demand')
         fetcher.data_dir = Path(self.test_data_dir)
 
         data = fetcher.fetch_historical_data(
-            tickers=["AAPL", "GOOGL"],
-            start_date="2021-01-01",
-            end_date="2021-01-02"
+            tickers=['AAPL', 'GOOGL'],
+            start_date='2021-01-01',
+            end_date='2021-01-02'
         )
 
-        self.assertIn("AAPL", data)
-        self.assertIn("GOOGL", data)
-        self.assertEqual(len(data["AAPL"]), 2)
-        self.assertEqual(len(data["GOOGL"]), 2)
-        self.assertListEqual(list(data["AAPL"].columns),
+        self.assertIn('AAPL', data)
+        self.assertIn('GOOGL', data)
+        self.assertEqual(len(data['AAPL']), 2)
+        self.assertEqual(len(data['GOOGL']), 2)
+        self.assertListEqual(list(data['AAPL'].columns),
                              ['open', 'high', 'low', 'close', 'volume', 'vwap', 'transactions'])
 
     @patch('src.data.data_fetcher.RESTClient')
@@ -57,29 +57,29 @@ class TestDataFetcher(unittest.TestCase):
             'vwap': [100.5, 101.5],
             'transactions': [5000, 5500]
         })
-        aapl_df.to_csv(Path(self.test_data_dir) / "AAPL.csv", index=False)
+        aapl_df.to_csv(Path(self.test_data_dir) / 'AAPL.csv', index=False)
 
-        fetcher = DataFetcher(mode="persistent")
+        fetcher = DataFetcher(mode='persistent')
         fetcher.data_dir = Path(self.test_data_dir)
 
         data = fetcher.fetch_historical_data(
-            tickers=["AAPL", "GOOGL"],
-            start_date="2021-01-01",
-            end_date="2021-01-02"
+            tickers=['AAPL', 'GOOGL'],
+            start_date='2021-01-01',
+            end_date='2021-01-02'
         )
 
-        self.assertIn("AAPL", data)
-        self.assertEqual(len(data["AAPL"]), 2)
-        self.assertListEqual(list(data["AAPL"].columns),
+        self.assertIn('AAPL', data)
+        self.assertEqual(len(data['AAPL']), 2)
+        self.assertListEqual(list(data['AAPL'].columns),
                              ['open', 'high', 'low', 'close', 'volume', 'vwap', 'transactions'])
 
         # GOOGL should not be in the data as we didn't create a CSV for it
-        self.assertNotIn("GOOGL", data)
+        self.assertNotIn('GOOGL', data)
 
     def test_convert_timestamp_to_date(self):
         fetcher = DataFetcher()
         date_str = fetcher._convert_timestamp_to_date(1609459200000)  # 2021-01-01 00:00:00 UTC
-        self.assertEqual(date_str, "2021-01-01")
+        self.assertEqual(date_str, '2021-01-01')
 
     @patch('src.data.data_fetcher.RESTClient')
     def test_fetch_and_save_tickers(self, mock_rest_client):
@@ -92,23 +92,23 @@ class TestDataFetcher(unittest.TestCase):
         ]
         mock_rest_client.return_value.get_aggs.return_value = mock_aggs
 
-        fetcher = DataFetcher(mode="persistent")
+        fetcher = DataFetcher(mode='persistent')
         fetcher.data_dir = Path(self.test_data_dir)
 
         historical_data = {}
         fetcher._fetch_and_save_tickers(
-            tickers=["AAPL"],
-            start_date="2021-01-01",
-            end_date="2021-01-02",
-            timespan="day",
+            tickers=['AAPL'],
+            start_date='2021-01-01',
+            end_date='2021-01-02',
+            timespan='day',
             limit=50000,
             adjusted=True,
             historical_data=historical_data
         )
 
-        self.assertIn("AAPL", historical_data)
-        self.assertEqual(len(historical_data["AAPL"]), 2)
-        self.assertTrue(Path(self.test_data_dir, "AAPL.csv").exists())
+        self.assertIn('AAPL', historical_data)
+        self.assertEqual(len(historical_data['AAPL']), 2)
+        self.assertTrue(Path(self.test_data_dir, 'AAPL.csv').exists())
 
 
 if __name__ == '__main__':

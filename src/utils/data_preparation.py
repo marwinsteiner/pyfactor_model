@@ -14,7 +14,7 @@ def prepare_returns_data(historical_data: Dict[str, pd.DataFrame]) -> pd.DataFra
 def fetch_benchmark_returns(start_date: str, end_date: str, benchmark: str) -> pd.Series:
     """Fetch benchmark returns for the given period."""
     # Fetch historical data using DataFetcher
-    data_fetcher = DataFetcher(mode="persistent")
+    data_fetcher = DataFetcher(mode='persistent')
     benchmark_data = data_fetcher.fetch_historical_data(
         tickers=[benchmark],
         start_date=start_date,
@@ -22,7 +22,7 @@ def fetch_benchmark_returns(start_date: str, end_date: str, benchmark: str) -> p
     )
 
     if not benchmark_data or benchmark not in benchmark_data:
-        print(f"No data available for benchmark {benchmark}. Exiting.")
+        print(f'No data available for benchmark {benchmark}. Exiting...')
         exit(1)
 
     # Extract the 'close' prices for the benchmark and calculate returns

@@ -74,16 +74,16 @@ class PortfolioPerformance:
         """Generate a summary of all performance metrics."""
         alpha, beta = self.alpha_beta()
         return {
-            "Total Return": self.total_return(),
-            "Annualized Return": self.annualized_return(),
-            "Sharpe Ratio": self.sharpe_ratio(),
-            "Max Drawdown": self.max_drawdown(),
-            "Alpha": alpha,
-            "Beta": beta,
-            "Information Ratio": self.information_ratio(),
-            "Tracking Error": self.tracking_error(),
-            "Sortino Ratio": self.sortino_ratio(),
-            "Calmar Ratio": self.calmar_ratio()
+            'Total Return': self.total_return(),
+            'Annualized Return': self.annualized_return(),
+            'Sharpe Ratio': self.sharpe_ratio(),
+            'Max Drawdown': self.max_drawdown(),
+            'Alpha': alpha,
+            'Beta': beta,
+            'Information Ratio': self.information_ratio(),
+            'Tracking Error': self.tracking_error(),
+            'Sortino Ratio': self.sortino_ratio(),
+            'Calmar Ratio': self.calmar_ratio()
         }
 
 

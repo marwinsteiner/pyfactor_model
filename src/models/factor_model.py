@@ -10,7 +10,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 
 class FactorModel:
-    def __init__(self, factors: List[str], benchmark_ticker: str = "SPY"):
+    def __init__(self, factors: List[str], benchmark_ticker: str = 'SPY'):
         self.factors = factors
         self.factor_exposures = None
         self.factor_returns = None
@@ -100,7 +100,7 @@ class FactorModel:
         target = pd.Series(target_exposures)
 
         # Simple portfolio construction: maximize expected return subject to target factor exposures
-        # Note: This is a simplified approach. In practice, you might use optimization techniques.
+        # Note: This is a simplified approach. In practice, one might use optimization techniques.
         portfolio = pd.Series(0, index=stock_tickers)
         remaining_budget = 1.0
 
@@ -114,7 +114,7 @@ class FactorModel:
                 portfolio += factor_portfolio * allocation
                 remaining_budget -= allocation
             else:
-                print(f"Warning: Unable to allocate to {factor} factor due to zero sum of exposures.")
+                print(f'Warning: Unable to allocate to {factor} factor due to zero sum of exposures.')
 
         # Normalize weights to sum to 1, ignoring NaN values
         pd.set_option('future.no_silent_downcasting', True)
@@ -125,7 +125,7 @@ class FactorModel:
         if portfolio_sum > 0:
             portfolio = portfolio / portfolio_sum
         else:
-            print("Warning: Unable to construct portfolio due to zero sum of weights.")
+            print('Warning: Unable to construct portfolio due to zero sum of weights.')
             return pd.Series(0, index=stock_tickers)
 
         return portfolio
