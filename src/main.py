@@ -19,8 +19,8 @@ def main():
     data_fetcher = DataFetcher(mode='persistent')
 
     # Define date range
-    start_date = '2018-01-01'
-    end_date = '2023-01-01'
+    start_date = '2022-01-01'
+    end_date = '2024-10-11'
 
     # Define stock tickers and benchmark ticker
     snp_weights, stock_tickers = load_snp_constituents()

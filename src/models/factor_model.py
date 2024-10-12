@@ -16,45 +16,42 @@ class FactorModel:
         self.factor_exposures = None
         self.factor_returns = None
         self.benchmark_ticker = benchmark_ticker
-        self.snp_weights = load_snp_constituents()
+        self.snp_weights, _ = load_snp_constituents()
 
     def calculate_factor_exposures(self, data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
-        # Exclude the benchmark from factor exposures calculation
-        stock_data = {ticker: df for ticker, df in data.items() if ticker != self.benchmark_ticker}
-
-        # Convert data to DataFrame of closing prices
-        df = pd.DataFrame({ticker: stock_data[ticker]['close'] for ticker in stock_data})
-
-        # Calculate returns
+        df = pd.DataFrame({ticker: data[ticker]['close'] for ticker in data})
         returns = df.pct_change(fill_method=None).dropna()
 
-        # Calculate market returns (assuming equal-weighted portfolio)
         market_returns = returns.mean(axis=1)
 
-        # Calculate factor exposures
         exposures = pd.DataFrame(index=df.columns, columns=self.factors)
 
         for ticker in df.columns:
-            # Market factor (Beta)
-            exposures.loc[ticker, 'Market'] = np.cov(returns[ticker], market_returns)[0, 1] / np.var(market_returns)
-
-            # Size factor (using S&P 500 weights)
-            if ticker in self.snp_weights.index:
-                exposures.loc[ticker, 'Size'] = np.log(self.snp_weights[ticker])
+            if returns[ticker].notna().sum() > 1 and market_returns.notna().sum() > 1:
+                cov_matrix = np.cov(returns[ticker].dropna(), market_returns.dropna())
+                if cov_matrix.shape == (2, 2):
+                    market_var = np.var(market_returns.dropna())
+                    if market_var != 0:
+                        exposures.loc[ticker, 'Market'] = cov_matrix[0, 1] / market_var
+                    else:
+                        exposures.loc[ticker, 'Market'] = np.nan
+                else:
+                    exposures.loc[ticker, 'Market'] = np.nan
             else:
-                exposures.loc[ticker, 'Size'] = np.log(self.snp_weights.min())
+                exposures.loc[ticker, 'Market'] = np.nan
 
-            # Value factor (assuming book value is available, using price-to-book ratio)
-            # Note: In a real scenario, you would need to incorporate book value data
-            exposures.loc[ticker, 'Value'] = 1 / df[ticker].iloc[-1]  # Placeholder, inverse of price as proxy
+            if not df[ticker].empty:
+                exposures.loc[ticker, 'Size'] = np.log(df[ticker].iloc[-1]) if df[ticker].iloc[-1] > 0 else np.nan
+                exposures.loc[ticker, 'Value'] = 1 / df[ticker].iloc[-1] if df[ticker].iloc[-1] != 0 else np.nan
 
-            # Momentum factor (use available data if less than 12 months)
-            if len(df) > 1:
-                exposures.loc[ticker, 'Momentum'] = (df[ticker].iloc[-1] / df[ticker].iloc[0]) - 1
+                if len(df) >= 252:
+                    exposures.loc[ticker, 'Momentum'] = (df[ticker].iloc[-1] / df[ticker].iloc[-252]) - 1 if \
+                        df[ticker].iloc[-252] != 0 else np.nan
+                else:
+                    exposures.loc[ticker, 'Momentum'] = np.nan
             else:
-                exposures.loc[ticker, 'Momentum'] = np.nan
+                exposures.loc[ticker, ['Size', 'Value', 'Momentum']] = np.nan
 
-        self.factor_exposures = exposures
         return exposures
 
     def estimate_factor_returns(self, data: Dict[str, pd.DataFrame]) -> pd.DataFrame:

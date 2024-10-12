@@ -5,11 +5,9 @@ from pathlib import Path
 
 
 def prepare_returns_data(historical_data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
-    """Convert historical price data to returns data."""
-    returns_data = pd.DataFrame()
-    for ticker, data in historical_data.items():
-        returns_data[ticker] = data['close'].pct_change()
-    return returns_data.dropna()
+    close_prices = {ticker: data['close'] for ticker, data in historical_data.items()}
+    price_df = pd.DataFrame(close_prices)
+    return price_df.pct_change(fill_method=None)
 
 
 def fetch_benchmark_returns(start_date: str, end_date: str, benchmark: str) -> pd.Series:

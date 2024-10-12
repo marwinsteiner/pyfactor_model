@@ -24,7 +24,7 @@ def backtest_strategy(historical_data: Dict[str, pd.DataFrame],
     portfolio_returns = pd.Series(index=returns_data.index)
     portfolio_weights = pd.DataFrame(index=returns_data.index, columns=returns_data.columns)
 
-    for end_date in returns_data.resample(rebalance_frequency).last().index:
+    for end_date in returns_data.resample('ME').last().index:  # 'M' for month for resampling is deprecated
         start_date = end_date - pd.Timedelta(days=window_size)
         window_data = {ticker: data.loc[start_date:end_date] for ticker, data in historical_data.items()}
 
