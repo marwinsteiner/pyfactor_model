@@ -4,6 +4,7 @@ from typing import List, Dict
 from sklearn.linear_model import LinearRegression
 from pathlib import Path
 import sys
+from src.utils.data_preparation import load_snp_constituents
 
 # Add the project root to the Python path
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
@@ -15,6 +16,7 @@ class FactorModel:
         self.factor_exposures = None
         self.factor_returns = None
         self.benchmark_ticker = benchmark_ticker
+        self.snp_weights = load_snp_constituents()
 
     def calculate_factor_exposures(self, data: Dict[str, pd.DataFrame]) -> pd.DataFrame:
         # Exclude the benchmark from factor exposures calculation
@@ -36,8 +38,11 @@ class FactorModel:
             # Market factor (Beta)
             exposures.loc[ticker, 'Market'] = np.cov(returns[ticker], market_returns)[0, 1] / np.var(market_returns)
 
-            # Size factor (market cap as proxy, using last close price as simple proxy)
-            exposures.loc[ticker, 'Size'] = np.log(df[ticker].iloc[-1])
+            # Size factor (using S&P 500 weights)
+            if ticker in self.snp_weights.index:
+                exposures.loc[ticker, 'Size'] = np.log(self.snp_weights[ticker])
+            else:
+                exposures.loc[ticker, 'Size'] = np.log(self.snp_weights.min())
 
             # Value factor (assuming book value is available, using price-to-book ratio)
             # Note: In a real scenario, you would need to incorporate book value data
