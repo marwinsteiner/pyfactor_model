@@ -1,6 +1,6 @@
 from src.data.data_fetcher import DataFetcher
 from src.models.factor_model import FactorModel
-from src.utils.data_preparation import prepare_returns_data, fetch_benchmark_returns
+from src.utils.data_preparation import prepare_returns_data, fetch_benchmark_returns, load_snp_constituents
 from src.utils.portfolio_construction import construct_equal_weight_portfolio, construct_market_cap_weight_portfolio
 from src.utils.backtesting import backtest_strategy
 from src.utils.performance_evaluation import PortfolioPerformance, calculate_turnover, perform_factor_attribution
@@ -23,7 +23,7 @@ def main():
     end_date = '2023-01-01'
 
     # Define stock tickers and benchmark ticker
-    stock_tickers = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'NVDA']
+    snp_weights, stock_tickers = load_snp_constituents()
     benchmark_ticker = 'SPY'
 
     # Fetch data for stocks

@@ -1,6 +1,6 @@
 import pandas as pd
 from src.data.data_fetcher import DataFetcher
-from typing import Dict
+from typing import Dict, Tuple, List
 from pathlib import Path
 
 
@@ -31,15 +31,21 @@ def fetch_benchmark_returns(start_date: str, end_date: str, benchmark: str) -> p
     return benchmark_prices.pct_change().dropna()
 
 
-def load_snp_constituents() -> pd.Series:
+def load_snp_constituents() -> Tuple[pd.Series, List[str]]:
     """
-      Load S&P 500 constituents and their weights from a CSV file.
+    Load S&P 500 constituents and their weights from a CSV file.
 
-      Returns:
-          pd.Series: A series with tickers as index and weights as values.
-      """
+    Returns:
+        Tuple[pd.Series, List[str]]: A series with tickers as index and weights as values,
+                                     and a list of all tickers.
+    """
     file_path = Path(__file__).parent.parent / "data" / "constituents" / "snp_constituents.csv"
     constituents_df = pd.read_csv(file_path)
-    constituents_df['weight'] = constituents_df['weight'].strip('%')  # Take out the percentage symbol
-    constituents_df['weight'] = constituents_df['weight'] / 100  # Convert percentage to decimal
-    return constituents_df.set_index('ticker')['weight']
+
+    # Remove percentage symbol and convert to float
+    constituents_df['weight'] = constituents_df['weight'].str.rstrip('%').astype('float') / 100.0
+
+    weights = constituents_df.set_index('ticker')['weight']
+    tickers = constituents_df['ticker'].tolist()
+
+    return weights, tickers
