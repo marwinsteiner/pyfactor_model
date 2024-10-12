@@ -90,6 +90,15 @@ def main():
     print('\nFactor Attribution:')
     print(attribution)
 
+    print('\nFactor Portfolio Performance:')
+    print(factor_portfolio_performance.summary())
+
+    print('\nEqual Weight Portfolio Performance:')
+    print(equal_weight_performance.summary())
+
+    print('\nMarket-Cap Weight Portfolio Performance:')
+    print(market_cap_performance.summary())
+
     # 7. Visualization
     plot_cumulative_returns({
         'Factor Model': portfolio_returns,
