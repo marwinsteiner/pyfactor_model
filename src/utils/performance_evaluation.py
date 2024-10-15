@@ -1,22 +1,22 @@
 import numpy as np
 import pandas as pd
 from typing import Tuple, Dict
+from loguru import logger
 
 
 class PortfolioPerformance:
     def __init__(self, portfolio_returns: pd.Series, benchmark_returns: pd.Series, risk_free_rate: float = 0.02):
-        """
-        Initialize the PortfolioPerformance class.
-
-        Args:
-            portfolio_returns (pd.Series): Daily returns of the portfolio
-            benchmark_returns (pd.Series): Daily returns of the benchmark
-            risk_free_rate (float): Annualized risk-free rate (default: 2%)
-        """
         self.portfolio_returns = portfolio_returns
         self.benchmark_returns = benchmark_returns
         self.risk_free_rate = risk_free_rate
         self.daily_risk_free_rate = (1 + risk_free_rate) ** (1 / 252) - 1
+
+        # Align the returns
+        self.portfolio_returns, self.benchmark_returns = self.portfolio_returns.align(self.benchmark_returns,
+                                                                                      join='inner')
+
+        logger.info(f"Portfolio returns shape: {self.portfolio_returns.shape}")
+        logger.info(f"Benchmark returns shape: {self.benchmark_returns.shape}")
 
     def total_return(self) -> float:
         """Calculate the total return of the portfolio."""
@@ -41,14 +41,25 @@ class PortfolioPerformance:
         return drawdown.min()
 
     def alpha_beta(self) -> Tuple[float, float]:
-        """Calculate the alpha and beta of the portfolio relative to the benchmark."""
         excess_portfolio_returns = self.portfolio_returns - self.daily_risk_free_rate
         excess_benchmark_returns = self.benchmark_returns - self.daily_risk_free_rate
 
-        beta = np.cov(excess_portfolio_returns, excess_benchmark_returns)[0, 1] / np.var(excess_benchmark_returns)
-        alpha = excess_portfolio_returns.mean() - (beta * excess_benchmark_returns.mean())
+        logger.info(f"Excess portfolio returns shape: {excess_portfolio_returns.shape}")
+        logger.info(f"Excess benchmark returns shape: {excess_benchmark_returns.shape}")
 
-        return alpha * 252, beta  # Annualize alpha
+        if len(excess_portfolio_returns) != len(excess_benchmark_returns):
+            raise ValueError("Portfolio and benchmark returns have different lengths")
+
+        # Calculate covariance manually to avoid issues with np.cov() edge case
+        portfolio_var = np.var(excess_portfolio_returns)
+        benchmark_var = np.var(excess_benchmark_returns)
+        covariance = np.mean(excess_portfolio_returns * excess_benchmark_returns) - (
+                    np.mean(excess_portfolio_returns) * np.mean(excess_benchmark_returns))
+
+        beta = covariance / benchmark_var
+        alpha = np.mean(excess_portfolio_returns) - (beta * np.mean(excess_benchmark_returns))
+
+        return float(alpha * 252), float(beta)  # Annualize alpha and convert to float
 
     def information_ratio(self) -> float:
         """Calculate the information ratio of the portfolio."""
