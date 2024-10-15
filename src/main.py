@@ -52,7 +52,7 @@ def main():
     portfolio_returns, portfolio_weights = backtest_strategy(
         historical_data,
         model,
-        rebalance_frequency='M',  # Monthly rebalancing
+        rebalance_frequency='ME',  # Monthly rebalancing
         window_size=252  # One year of trading days
     )
 
