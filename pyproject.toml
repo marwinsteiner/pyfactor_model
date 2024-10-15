@@ -12,6 +12,7 @@ polygon-api-client = "^1.14.2"
 scikit-learn = "^1.5.2"
 matplotlib = "^3.9.2"
 seaborn = "^0.13.2"
+loguru = "^0.7.2"
 
 
 [build-system]
