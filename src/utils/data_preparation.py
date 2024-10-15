@@ -30,20 +30,9 @@ def fetch_benchmark_returns(start_date: str, end_date: str, benchmark: str) -> p
 
 
 def load_snp_constituents() -> Tuple[pd.Series, List[str]]:
-    """
-    Load S&P 500 constituents and their weights from a CSV file.
-
-    Returns:
-        Tuple[pd.Series, List[str]]: A series with tickers as index and weights as values,
-                                     and a list of all tickers.
-    """
     file_path = Path(__file__).parent.parent / "data" / "constituents" / "snp_constituents.csv"
     constituents_df = pd.read_csv(file_path)
-
-    # Remove percentage symbol and convert to float
     constituents_df['weight'] = constituents_df['weight'].str.rstrip('%').astype('float') / 100.0
-
     weights = constituents_df.set_index('ticker')['weight']
     tickers = constituents_df['ticker'].tolist()
-
     return weights, tickers
