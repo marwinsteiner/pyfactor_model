@@ -82,20 +82,26 @@ class PortfolioPerformance:
         return self.annualized_return() / abs(self.max_drawdown())
 
     def summary(self) -> Dict[str, float]:
-        """Generate a summary of all performance metrics."""
-        alpha, beta = self.alpha_beta()
-        return {
-            'Total Return': self.total_return(),
-            'Annualized Return': self.annualized_return(),
-            'Sharpe Ratio': self.sharpe_ratio(),
-            'Max Drawdown': self.max_drawdown(),
-            'Alpha': alpha,
-            'Beta': beta,
-            'Information Ratio': self.information_ratio(),
-            'Tracking Error': self.tracking_error(),
-            'Sortino Ratio': self.sortino_ratio(),
-            'Calmar Ratio': self.calmar_ratio()
-        }
+        result = {}
+        try:
+            for key, value in {
+                "Total Return": self.total_return(),
+                "Annualized Return": self.annualized_return(),
+                "Sharpe Ratio": self.sharpe_ratio(),
+                "Max Drawdown": self.max_drawdown(),
+                "Alpha": self.alpha_beta()[0],
+                "Beta": self.alpha_beta()[1],
+                "Information Ratio": self.information_ratio(),
+                "Tracking Error": self.tracking_error(),
+                "Sortino Ratio": self.sortino_ratio(),
+                "Calmar Ratio": self.calmar_ratio()
+            }.items():
+                result[key] = float(value)
+        except Exception as e:
+            logger.error(f"Error calculating performance summary: {str(e)}")
+            logger.exception("Exception details:")
+
+        return result
 
 
 def calculate_turnover(portfolio_weights: pd.DataFrame) -> float:

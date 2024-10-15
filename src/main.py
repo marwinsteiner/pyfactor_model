@@ -107,9 +107,16 @@ def main():
         'Benchmark': aligned_benchmark_returns
     })
 
-    plot_drawdown(portfolio_returns)
+    if not portfolio_returns.empty and portfolio_returns.dtype == float:
+        plot_drawdown(portfolio_returns)
+    else:
+        print("Unable to plot drawdown: portfolio returns are empty or contain non-numeric values")
+
     plot_factor_attribution(attribution)
 
 
 if __name__ == "__main__":
     main()
+
+
+# TODO: identify why cumulative returns are 1.0 until 2024 and only then change for the factor model. Suspicion is that it has to do with not being able to calculate the factor exposures prior to this date.

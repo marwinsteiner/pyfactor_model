@@ -50,5 +50,8 @@ def backtest_strategy(historical_data: Dict[str, pd.DataFrame],
         future_returns = stock_returns.loc[end_date:].iloc[:20]  # Assume 20 trading days per month
         portfolio_returns.loc[end_date:] = (future_returns * weights).sum(axis=1)
 
+    portfolio_returns = portfolio_returns.astype(float)
+    portfolio_weights = portfolio_weights.astype(float)
+
     logger.info("Backtesting strategy completed.")
     return portfolio_returns.dropna(), portfolio_weights.dropna()

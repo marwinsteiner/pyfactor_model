@@ -19,6 +19,7 @@ def plot_cumulative_returns(returns_dict: Dict[str, pd.Series]) -> None:
 
 def plot_drawdown(returns: pd.Series) -> None:
     """Plot drawdown of a given portfolio over time."""
+    returns = returns.astype(float)  # make them all floats
     cumulative_returns = (1 + returns).cumprod()
     peak = cumulative_returns.expanding(min_periods=1).max()
     drawdown = (cumulative_returns / peak) - 1
