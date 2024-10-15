@@ -119,4 +119,39 @@ if __name__ == "__main__":
     main()
 
 
-# TODO: identify why cumulative returns are 1.0 until 2024 and only then change for the factor model. Suspicion is that it has to do with not being able to calculate the factor exposures prior to this date.
+# TODO: identify why cumulative returns are 1.0 until 2024 and only then change for the factor model. Suspicion is
+#  that it has to do with not being able to calculate the factor exposures prior to this date.
+
+# Good resource to find updated list of components: https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
+
+# TODO:
+#  """
+#  Factor Exposure Calculation:
+#   The log shows that the calculated exposures shape is (0, 4), which means no factor exposures are being calculated. This is likely the root cause of the flat performance.
+#   Data Handling:
+#   The log shows that after dropping NaN values, the returns shape becomes (0, 503), meaning all data is being removed. This suggests there might be an issue with how missing or invalid data is being handled.
+#   Market Returns:
+#   The market returns shape is (0,), which is consistent with the previous point and indicates no valid market returns are being calculated.
+#   Potential causes and solutions:
+#   Data Quality:
+#   Check if the input data contains a large number of NaN or invalid values.
+#   Review the data preprocessing steps to ensure data is being cleaned appropriately without removing all values.
+#   Date Alignment:
+#   Ensure that the dates for all stocks are properly aligned. Misaligned dates could cause the dropna() function to remove all data.
+#   Factor Exposure Calculation Logic:
+#   Review the factor exposure calculation method to ensure it's not too restrictive in filtering out data.
+#   Consider using a rolling window approach for calculating exposures instead of requiring all data to be available from the start.
+#   Error Handling:
+#   Implement more robust error handling in the factor exposure calculation to prevent empty results from propagating through the system.
+#   Lookback Period:
+#   Check if the lookback period for calculating exposures is appropriate. If it's too long, it might not have enough data at the beginning of the backtest.
+#   Data Frequency:
+#   Verify that the data frequency matches what the model expects. For example, if the model expects daily data but receives monthly data, it might cause issues.
+#   Factor Definition:
+#   Review how each factor (Market, Size, Value, Momentum) is defined and calculated. Ensure they are appropriate for the data you have.
+#   Next steps:
+#   Add more detailed logging in the factor exposure calculation method to understand why all data is being dropped.
+#   Implement a check to print out a sample of the input data before and after the dropna() operation to see what's being removed.
+#   Consider implementing a more gradual approach to factor exposure calculation, allowing for partial data availability, especially at the beginning of the backtest period.
+#   Review the backtesting strategy to ensure it's handling the initial period correctly when full factor exposures might not be available.
+#  """
